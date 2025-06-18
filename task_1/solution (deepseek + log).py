@@ -6,7 +6,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],
 )
-logger = logging.getLogger("strict_decorator")
+logger = logging.getLogger(__name__)
 
 
 def strict(func):
