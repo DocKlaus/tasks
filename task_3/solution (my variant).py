@@ -6,7 +6,95 @@
 
 
 def appearance(intervals: dict[str, list[int]]) -> int:
-    pass
+    # В функцию передаётся только один тект [inter: {less:[...], pupil:[...], tutor:[...]}]
+    # Разбиваем интервал урока на переменные
+    less_start, less_end = intervals["lesson"]
+    # print(f'less_start: {less_start}, less_end: {less_end}')
+
+    # Функция принимает по-очереди учителя и ученика
+    # Обрезает начало и конец интервала, если они не вписываются в урок
+
+    def trim_by_lesson(local_intervals: list[int]):
+        list_for_pairs = []
+        for i in range(0, len(local_intervals), 2):
+            start = local_intervals[i]
+            end = local_intervals[i + 1]
+
+            # Обрезаем по началу урока
+            start = max(start, less_start)
+
+            # Обрезаем по окончанию урока
+            end = min(end, less_end)
+
+            # Сравниваем начало с концом.
+            # Конец будет раньше, чем начало после обрезки, если ученик/учитель зашёл и вышел раньше начала урока или позже окончания урока
+            if start < end:
+                list_for_pairs.append((start, end))
+            list_for_pairs.sort()
+
+        return list_for_pairs
+
+
+    def merged(list_for_pairs):
+        # Между интервалами есть пересечения. Объединяем
+        list_merged_intervals = []
+        for cur_interval in list_for_pairs:
+
+            # Первый сразу добавляем
+            if not list_merged_intervals:
+                list_merged_intervals.append(cur_interval)
+
+            else:
+                # Последний интервал - последний в списке объединённых
+                last_interval = list_merged_intervals[-1]
+                # Если начало текущего не объединённого интервала меньше или равно окончания последнего объединённого интервала, значит есть пересечение
+                if cur_interval[0] <= last_interval[1]:
+                    new_interval = (last_interval[0], max(last_interval[1], cur_interval[1]))
+                    # Заменяем последний интервал в листе на новый объединённый
+                    list_merged_intervals[-1] = new_interval
+                else:
+                    # Если не пересекается, то просто добавляем
+                    list_merged_intervals.append(cur_interval)
+
+        return list_merged_intervals
+
+
+    pupil_trim_intervals = trim_by_lesson(intervals["pupil"])
+    # print(f'pupil_trim_intervals: {pupil_trim_intervals}')
+    pupil_merged_intervals = merged(pupil_trim_intervals)
+    # print(f'pupil_merged_intervals: {pupil_merged_intervals}')
+
+    tutor_trim_intervals = trim_by_lesson(intervals["tutor"])
+    # print(f'tutor_trim_intervals: {tutor_trim_intervals}')
+    tutor_merged_intervals = merged(tutor_trim_intervals)
+    # print(f'tutor_merged_intervals: {tutor_merged_intervals}')
+
+    # Объединяем учителя и ученика
+    result_time = 0
+    p = t = 0
+
+    while p < len(pupil_merged_intervals) and t < len(tutor_merged_intervals):
+        pupil_start, pupil_end = pupil_merged_intervals[p]
+        tutor_start, tutor_end = tutor_merged_intervals[t]
+
+        common_start = max(pupil_start, tutor_start)
+        common_end = min(pupil_end, tutor_end)
+
+        # False будет если интервалы не пересекаются(например: ученик зашёл и вышел, а учитель все это время не заходил)
+        if common_start < common_end:
+            # Если пересекаются, то в общее время добавляем время интервала
+            result_time += common_end - common_start
+
+        # Тикаем счётчики
+        if pupil_end < tutor_end:
+            p += 1
+        else:
+            t += 1
+
+    return result_time
+
+
+
 
 tests = [
     {'intervals': {'lesson': [1594663200, 1594666800],
@@ -29,4 +117,5 @@ tests = [
 if __name__ == '__main__':
    for i, test in enumerate(tests):
        test_answer = appearance(test['intervals'])
+       print(f'test_answer: {test_answer}')
        assert test_answer == test['answer'], f'Error on test case {i}, got {test_answer}, expected {test["answer"]}'
