@@ -132,7 +132,8 @@ class WikipediaAnimalsParser:
             # В супе ищем новую страничку и переписываем в текущую
             current_url = self.find_next_page(soup)
 
-        self.save_to_csv()
+        if self.letters_counts:
+            self.save_to_csv()
 
         # Доп лог-плюшки от НС
         logger.info(f"Total pages processed: {page_count}")
